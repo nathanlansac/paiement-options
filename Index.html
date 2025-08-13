@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Paiement options supplémentaires</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 40px;
+    }
+    .payment-box {
+      background: white;
+      max-width: 700px;
+      margin: 0 auto;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    h2 {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .left, .right {
+      flex: 1;
+      min-width: 280px;
+    }
+    .product {
+      margin-bottom: 30px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+    .quantity {
+      font-weight: bold;
+      margin-top: 4px;
+      text-align: right;
+      font-size: 14px;
+      color: #555;
+    }
+    .summary h3 {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .summary p {
+      font-size: 16px;
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .total {
+      font-weight: 700;
+      font-size: 20px;
+      border-top: 2px solid #ddd;
+      padding-top: 12px;
+      margin-top: 15px;
+      text-align: right;
+    }
+    button {
+      margin-top: 30px;
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #6772e5;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #5469d4;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="payment-box">
+    <h2>Paiement des options supplémentaires</h2>
+
+    <div class="left">
+      <div class="product">
+        <label for="lit">Linge de lit (15€ chacun)</label>
+        <input type="range" id="lit" min="0" max="18" value="0" />
+        <div class="quantity">Quantité : <span id="lit-val">0</span></div>
+      </div>
+
+      <div class="product">
+        <label for="toilette">Linge de toilette (10€ chacun)</label>
+        <input type="range" id="toilette" min="0" max="18" value="0" />
+        <div class="quantity">Quantité : <span id="toilette-val">0</span></div>
+      </div>
+
+      <div class="product">
+        <label for="pac">Jour d’activation de la PAC (50€ par jour)</label>
+        <input type="range" id="pac" min="0" max="14" value="0" />
+        <div class="quantity">Quantité : <span id="pac-val">0</span></div>
+      </div>
+    </div>
+
+    <div class="right summary">
+      <h3>Total</h3>
+      <p>Linge de lit : <span id="lit-total">0€</span></p>
+      <p>Linge de toilette : <span id="toilette-total">0€</span></p>
+      <p>Jour activation PAC : <span id="pac-total">0€</span></p>
+      <p class="total">Total général : <span id="total">0€</span></p>
+
+      <button id="pay-btn">Payer avec Stripe</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const PRICES = { lit: 15, toilette: 10, pac: 50 };
+      const elements = {
+        lit: document.getElementById('lit'),
+        toilette: document.getElementById('toilette'),
+        pac: document.getElementById('pac'),
+        litVal: document.getElementById('lit-val'),
+        toiletteVal: document.getElementById('toilette-val'),
+        pacVal: document.getElementById('pac-val'),
+        litTotal: document.getElementById('lit-total'),
+        toiletteTotal: document.getElementById('toilette-total'),
+        pacTotal: document.getElementById('pac-total'),
+        total: document.getElementById('total'),
+      };
+
+      function updateTotals() {
+        const qLit = parseInt(elements.lit.value);
+        const qToilette = parseInt(elements.toilette.value);
+        const qPac = parseInt(elements.pac.value);
+
+        const totalLit = qLit * PRICES.lit;
+        const totalToilette = qToilette * PRICES.toilette;
+        const totalPac = qPac * PRICES.pac;
+        const total = totalLit + totalToilette + totalPac;
+
+        elements.litVal.textContent = qLit;
+        elements.toiletteVal.textContent = qToilette;
+        elements.pacVal.textContent = qPac;
+
+        elements.litTotal.textContent = totalLit + "€";
+        elements.toiletteTotal.textContent = totalToilette + "€";
+        elements.pacTotal.textContent = totalPac + "€";
+        elements.total.textContent = total + "€";
+
+        return { qLit, qToilette, qPac, total };
+      }
+
+      elements.lit.addEventListener('input', updateTotals);
+      elements.toilette.addEventListener('input', updateTotals);
+      elements.pac.addEventListener('input', updateTotals);
+      updateTotals();
+
+      const stripe = Stripe("pk_live_51PaauIRxiwZIjdur3N6FBkwwHr1yX0jEsENvwSPAajlb3p5ncW3ViEJLoIRpWqZyLlGxgMzvtEYeGll56CXzUk4H00l2Ziuqiz");
+
+      document.getElementById('pay-btn').addEventListener('click', async () => {
+        const { qLit, qToilette, qPac } = updateTotals();
+
+        if (qLit + qToilette + qPac === 0) {
+          alert("Veuillez sélectionner au moins un produit.");
+          return;
+        }
+
+        try {
+          const response = await fetch('https://backend-stripe-q46m.onrender.com/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lit: qLit, toilette: qToilette, pac: qPac })
+          });
+
+          const data = await response.json();
+
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+
+          window.location.href = data.url;
+
+        } catch (err) {
+          alert("Erreur lors de la création de la session de paiement.");
+          console.error(err);
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
