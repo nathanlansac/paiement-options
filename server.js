@@ -18,8 +18,8 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: 'https://ton-site.com/success',  // À modifier par ton vrai lien
-      cancel_url: 'https://ton-site.com/cancel',    // À modifier par ton vrai lien
+      success_url: 'https://laetitia-lansac.lodgify.com/fr/success',
+      cancel_url: 'https://laetitia-lansac.lodgify.com/fr/cancel',   
     });
 
     res.json({ id: session.id });
@@ -33,4 +33,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Serveur backend Stripe lancé sur le port ${PORT}`);
 });
+
 
