@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const stripe = require('stripe')('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');
+const stripe = require('stripe')('STRIPE_SECRET_KEY=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');
 
 const app = express();
 app.use(cors());
@@ -33,3 +33,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Serveur backend Stripe lancé sur le port ${PORT}`);
 });
+
