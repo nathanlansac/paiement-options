@@ -155,15 +155,13 @@
         elements.pacTotal.textContent = totalPac + "€";
         elements.total.textContent = total + "€";
 
-        return { qLit, qToilette, qPac, total };
+        return { qLit, qToilette, qPac };
       }
 
       elements.lit.addEventListener('input', updateTotals);
       elements.toilette.addEventListener('input', updateTotals);
       elements.pac.addEventListener('input', updateTotals);
       updateTotals();
-
-      const stripe = Stripe("pk_live_51PaauIRxiwZIjdur3N6FBkwwHr1yX0jEsENvwSPAajlb3p5ncW3ViEJLoIRpWqZyLlGxgMzvtEYeGll56CXzUk4H00l2Ziuqiz");
 
       document.getElementById('pay-btn').addEventListener('click', async () => {
         const { qLit, qToilette, qPac } = updateTotals();
@@ -188,14 +186,13 @@
           }
 
           window.location.href = data.url;
-
         } catch (err) {
-          alert("Erreur lors de la création de la session de paiement.");
+          alert("Erreur lors de la création de la session.");
           console.error(err);
         }
       });
     });
-  </script>
 
 </body>
 </html>
+
