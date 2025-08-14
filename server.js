@@ -1,13 +1,17 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
-const stripe = require('stripe')('STRIPE_SECRET_KEY=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');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
 app.post('/create-checkout-session', async (req, res) => {
-  const { lit, toilette, pac } = req.body;
+  const { lit = 0, toilette = 0, pac = 0 } = req.body;
+
+  if (lit < 0 || toilette < 0 || pac < 0) {
+    return res.status(400).json({ error: 'Quantités invalides.' });
+  }
 
   const lineItems = [];
 
@@ -45,4 +49,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`);
 });
+
 
