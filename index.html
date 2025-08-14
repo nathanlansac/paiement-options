@@ -2,55 +2,117 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Paiement options supplémentaires</title>
+  <title>Formulaire d'enregistrement</title>
   <script src="https://js.stripe.com/v3/"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 40px;
-    }
-    .payment-box {
-      background: white;
-      max-width: 700px;
-      margin: 0 auto;
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      display: flex;
-      gap: 40px;
-      flex-wrap: wrap;
+      margin: 40px;
     }
     h2 {
-      width: 100%;
       text-align: center;
-      margin-bottom: 30px;
     }
-    .left, .right {
-      flex: 1;
-      min-width: 280px;
-    }
-    .product {
+    .progress-bar {
+      width: 100%;
+      background-color: #f1f1f1;
+      border-radius: 20px;
+      overflow: hidden;
       margin-bottom: 30px;
+      height: 20px;
+    }
+    .progress {
+      height: 100%;
+      background-color: #4CAF50;
+      width: 0%;
+      transition: width 0.3s ease-in-out;
+    }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    .buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    button:hover:not([disabled]) {
+      background-color: #45a049;
+    }
+    button[disabled] {
+      background-color: #ccc;
+      cursor: default;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
     }
     label {
       font-weight: bold;
       display: block;
+    }
+    .subtitle {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      color: #333;
+      font-weight: bold;
+    }
+    form {
+      max-width: 700px;
+      margin: auto;
+    }
+    /* Styles pour l'étape paiement */
+    .payment-box {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .payment-left, .payment-right {
+      flex: 1;
+      min-width: 280px;
+    }
+    .product {
+      margin-bottom: 25px;
+    }
+    .product label {
       margin-bottom: 8px;
+      font-weight: bold;
+      display: block;
     }
     input[type=range] {
       width: 100%;
+      cursor: pointer;
     }
     .quantity {
       font-weight: bold;
       margin-top: 4px;
-      text-align: right;
       font-size: 14px;
       color: #555;
+      text-align: right;
     }
     .summary h3 {
-      margin-bottom: 15px;
       text-align: center;
+      margin-bottom: 15px;
     }
     .summary p {
       font-size: 16px;
@@ -66,8 +128,8 @@
       margin-top: 15px;
       text-align: right;
     }
-    button {
-      margin-top: 30px;
+    #pay-btn {
+      margin-top: 25px;
       width: 100%;
       padding: 12px;
       font-size: 18px;
@@ -79,49 +141,129 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
-    button:hover {
+    #pay-btn:hover {
       background-color: #5469d4;
     }
   </style>
 </head>
 <body>
 
-  <div class="payment-box">
-    <h2>Paiement des options supplémentaires</h2>
-
-    <div class="left">
-      <div class="product">
-        <label for="lit">Linge de lit (15€ chacun)</label>
-        <input type="range" id="lit" min="0" max="18" value="0" />
-        <div class="quantity">Quantité : <span id="lit-val">0</span></div>
-      </div>
-
-      <div class="product">
-        <label for="toilette">Linge de toilette (10€ chacun)</label>
-        <input type="range" id="toilette" min="0" max="18" value="0" />
-        <div class="quantity">Quantité : <span id="toilette-val">0</span></div>
-      </div>
-
-      <div class="product">
-        <label for="pac">Jour d’activation de la PAC (50€ par jour)</label>
-        <input type="range" id="pac" min="0" max="14" value="0" />
-        <div class="quantity">Quantité : <span id="pac-val">0</span></div>
-      </div>
-    </div>
-
-    <div class="right summary">
-      <h3>Total</h3>
-      <p>Linge de lit : <span id="lit-total">0€</span></p>
-      <p>Linge de toilette : <span id="toilette-total">0€</span></p>
-      <p>Jour activation PAC : <span id="pac-total">0€</span></p>
-      <p class="total">Total général : <span id="total">0€</span></p>
-
-      <button id="pay-btn">Payer avec Stripe</button>
-    </div>
+  <h2>Formulaire d'enregistrement</h2>
+  <div class="progress-bar">
+    <div class="progress" id="progressBar"></div>
   </div>
+
+  <form id="multiStepForm" novalidate>
+    <!-- Étape 1 -->
+    <div class="step active">
+      <div class="subtitle">Informations de contact</div>
+
+      <label for="nom">Nom :</label>
+      <input type="text" id="nom" name="nom" required />
+
+      <label for="prenom">Prénom :</label>
+      <input type="text" id="prenom" name="prenom" required />
+
+      <label for="telephone">Téléphone :</label>
+      <input type="tel" id="telephone" name="telephone" required />
+
+      <label for="email">Adresse Email :</label>
+      <input type="email" id="email" name="email" required />
+    </div>
+
+    <!-- Étape 2 -->
+    <div class="step">
+      <div class="subtitle">Date d’arrivée et de départ</div>
+
+      <label for="arrivee">Date d’arrivée :</label>
+      <input type="date" id="arrivee" name="arrivee" required />
+
+      <label for="depart">Date de départ :</label>
+      <input type="date" id="depart" name="depart" required />
+    </div>
+
+    <!-- Étape 3 -->
+    <div class="step">
+      <div class="subtitle">Composition de votre groupe</div>
+
+      <label for="couples">Nombre de couples :</label>
+      <input type="number" id="couples" name="couples" min="0" required />
+
+      <label for="celibataires">Nombre de célibataires :</label>
+      <input type="number" id="celibataires" name="celibataires" min="0" required />
+
+      <label for="adultes">Nombre d’adultes (+18 ans) :</label>
+      <input type="number" id="adultes" name="adultes" min="0" required />
+
+      <label for="enfants">Nombre d’enfants (2 à 18 ans) :</label>
+      <input type="number" id="enfants" name="enfants" min="0" required />
+
+      <label for="bebes">Nombre de bébés (-2 ans) :</label>
+      <input type="number" id="bebes" name="bebes" min="0" required />
+    </div>
+
+    <!-- Étape 4 (Paiement options supplémentaires) -->
+    <div class="step">
+      <div class="subtitle">Paiement des options supplémentaires</div>
+
+      <div class="payment-box">
+        <div class="payment-left">
+          <div class="product">
+            <label for="lit">Linge de lit (15€ chacun)</label>
+            <input type="range" id="lit" min="0" max="18" value="0" />
+            <div class="quantity">Quantité : <span id="lit-val">0</span></div>
+          </div>
+
+          <div class="product">
+            <label for="toilette">Linge de toilette (10€ chacun)</label>
+            <input type="range" id="toilette" min="0" max="18" value="0" />
+            <div class="quantity">Quantité : <span id="toilette-val">0</span></div>
+          </div>
+
+          <div class="product">
+            <label for="pac">Jour d’activation de la PAC (50€ par jour)</label>
+            <input type="range" id="pac" min="0" max="14" value="0" />
+            <div class="quantity">Quantité : <span id="pac-val">0</span></div>
+          </div>
+        </div>
+
+        <div class="payment-right summary">
+          <h3>Total</h3>
+          <p>Linge de lit : <span id="lit-total">0€</span></p>
+          <p>Linge de toilette : <span id="toilette-total">0€</span></p>
+          <p>Jour activation PAC : <span id="pac-total">0€</span></p>
+          <p class="total">Total général : <span id="total">0€</span></p>
+
+          <button type="button" id="pay-btn">Payer avec Stripe</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Étape 5 (Confirmation) -->
+    <div class="step">
+      <div class="subtitle">Confirmation</div>
+      <p>Merci de vérifier vos informations avant de valider votre enregistrement.</p>
+      <div style="text-align:center; margin-top:20px;">
+        <button type="submit" id="submitBtn">Valider l'enregistrement</button>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button type="button" id="prevBtn">Précédent</button>
+      <button type="button" id="nextBtn">Suivant</button>
+    </div>
+  </form>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('multiStepForm');
+      const steps = document.querySelectorAll('.step');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const progressBar = document.getElementById('progressBar');
+      let currentStep = 0;
+
+      // Paiement elements
       const PRICES = { lit: 15, toilette: 10, pac: 50 };
       const elements = {
         lit: document.getElementById('lit'),
@@ -155,7 +297,7 @@
         elements.pacTotal.textContent = totalPac + "€";
         elements.total.textContent = total + "€";
 
-        return { qLit, qToilette, qPac };
+        return { qLit, qToilette, qPac, total };
       }
 
       elements.lit.addEventListener('input', updateTotals);
@@ -163,10 +305,12 @@
       elements.pac.addEventListener('input', updateTotals);
       updateTotals();
 
-      document.getElementById('pay-btn').addEventListener('click', async () => {
-        const { qLit, qToilette, qPac } = updateTotals();
+      const stripe = Stripe("pk_live_51PaauIRxiwZIjdur3N6FBkwwHr1yX0jEsENvwSPAajlb3p5ncW3ViEJLoIRpWqZyLlGxgMzvtEYeGll56CXzUk4H00l2Ziuqiz");
 
-        if (qLit + qToilette + qPac === 0) {
+      document.getElementById('pay-btn').addEventListener('click', async () => {
+        const { qLit, qToilette, qPac, total } = updateTotals();
+
+        if (total === 0) {
           alert("Veuillez sélectionner au moins un produit.");
           return;
         }
@@ -186,12 +330,64 @@
           }
 
           window.location.href = data.url;
+
         } catch (err) {
-          alert("Erreur lors de la création de la session.");
+          alert("Erreur lors de la création de la session de paiement.");
           console.error(err);
         }
       });
+
+      // Navigation étapes
+      function showStep(n) {
+        steps.forEach((step, i) => {
+          step.classList.toggle('active', i === n);
+        });
+        currentStep = n;
+
+        // Mise à jour de la barre de progression
+        progressBar.style.width = ((n) / (steps.length - 1)) * 100 + '%';
+
+        // Boutons
+        prevBtn.style.display = n === 0 ? 'none' : 'inline-block';
+        nextBtn.style.display = n === steps.length - 1 ? 'none' : 'inline-block';
+        // Le bouton submit seulement à la dernière étape
+        document.getElementById('submitBtn').style.display = n === steps.length - 1 ? 'inline-block' : 'none';
+      }
+
+      prevBtn.addEventListener('click', () => {
+        if (currentStep > 0) {
+          showStep(currentStep - 1);
+        }
+      });
+
+      nextBtn.addEventListener('click', () => {
+        // Validation des champs obligatoires dans l'étape en cours
+        const inputs = steps[currentStep].querySelectorAll('input[required], select[required]');
+        let valid = true;
+        inputs.forEach(input => {
+          if (!input.checkValidity()) {
+            input.reportValidity();
+            valid = false;
+          }
+        });
+        if (!valid) return;
+
+        if (currentStep < steps.length - 1) {
+          showStep(currentStep + 1);
+        }
+      });
+
+      // Submit final (tu peux ici gérer l'enregistrement ou autre)
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert('Formulaire soumis avec succès !');
+        // Ici tu peux faire un envoi à ton backend pour enregistrer les infos ou autre
+      });
+
+      showStep(currentStep);
     });
   </script>
 </body>
 </html>
+
+
