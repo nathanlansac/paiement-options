@@ -1,34 +1,49 @@
-window.onload = () => {
-  const stripe = Stripe("pk_live_51PaauIRxiwZIjdur3N6FBkwwHr1yX0jEsENvwSPAajlb3p5ncW3ViEJLoIRpWqZyLlGxgMzvtEYeGll56CXzUk4H00l2Ziuqiz");
+const express = require('express');
+const cors = require('cors');
+const stripe = require('stripe')('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');
+const app = express();
 
-  document.getElementById('pay-btn').addEventListener('click', async () => {
-    const { qLit, qToilette, qPac } = updateTotals();
+app.use(cors());
+app.use(express.json());
 
-    if (qLit + qToilette + qPac === 0) {
-      alert("Veuillez sélectionner au moins un produit.");
-      return;
-    }
+app.post('/create-checkout-session', async (req, res) => {
+  const { lit, toilette, pac } = req.body;
 
-    try {
-      const response = await fetch('https://backend-stripe-q46m.onrender.com/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lit: qLit, toilette: qToilette, pac: qPac })
-      });
+  const lineItems = [];
 
-      const data = await response.json();
+  if (lit > 0) {
+    lineItems.push({ price: 'price_1RvHtWRxiwZIjdurs2knMdwl', quantity: lit });
+  }
+  if (toilette > 0) {
+    lineItems.push({ price: 'price_1RvHuSRxiwZIjdurFDfMGSlq', quantity: toilette });
+  }
+  if (pac > 0) {
+    lineItems.push({ price: 'price_1RvHvyRxiwZIjdurHPCPNKAp', quantity: pac });
+  }
 
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
+  if (lineItems.length === 0) {
+    return res.status(400).json({ error: 'Aucun article sélectionné.' });
+  }
 
-      window.location.href = data.url;
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: 'https://laetitia-lansac.lodgify.com/fr/success',
+      cancel_url: 'https://laetitia-lansac.lodgify.com/fr/cancel',
+    });
 
-    } catch (err) {
-      alert("Erreur lors de la création de la session de paiement.");
-      console.error(err);
-    }
-  });
-};
+    res.json({ url: session.url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Serveur lancé sur le port ${PORT}`);
+});
+
+
 
